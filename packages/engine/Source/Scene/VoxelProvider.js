@@ -41,10 +41,10 @@ Object.defineProperties(VoxelProvider.prototype, {
   },
 
   /**
-   * A model matrix that is applied to all tiles. If undefined, the identity matrix will be used instead.
+   * A model matrix that is applied to all tiles. Defaults to the identity matrix.
    *
    * @memberof VoxelProvider.prototype
-   * @type {Matrix4|undefined}
+   * @type {Matrix4}
    * @readonly
    */
   modelMatrix: {
@@ -102,7 +102,7 @@ Object.defineProperties(VoxelProvider.prototype, {
   },
 
   /**
-   * Gets the number of padding voxels before the tile. This improves rendering quality when sampling the edge of a tile, but it increases memory usage. If
+   * Gets the number of padding voxels before the tile. This improves rendering quality when sampling the edge of a tile, but it increases memory usage.
    * This should not be called before {@link VoxelProvider#ready} returns true.
    *
    * @memberof VoxelProvider.prototype
@@ -114,7 +114,7 @@ Object.defineProperties(VoxelProvider.prototype, {
   },
 
   /**
-   * Gets the number of padding voxels after the tile. This improves rendering quality when sampling the edge of a tile, but it increases memory usage. If
+   * Gets the number of padding voxels after the tile. This improves rendering quality when sampling the edge of a tile, but it increases memory usage.
    * This should not be called before {@link VoxelProvider#ready} returns true.
    *
    * @memberof VoxelProvider.prototype
@@ -138,26 +138,24 @@ Object.defineProperties(VoxelProvider.prototype, {
   },
 
   /**
-   * Gets the metadata types
+   * Gets the metadata types.
    * This should not be called before {@link VoxelProvider#ready} returns true.
    *
    * @memberof VoxelProvider.prototype
    * @type {MetadataType[]}
    * @readonly
-   * @private
    */
   types: {
     get: DeveloperError.throwInstantiationError(),
   },
 
   /**
-   * Gets the metadata component types
+   * Gets the metadata component types.
    * This should not be called before {@link VoxelProvider#ready} returns true.
    *
    * @memberof VoxelProvider.prototype
    * @type {MetadataComponentType[]}
    * @readonly
-   * @private
    */
   componentTypes: {
     get: DeveloperError.throwInstantiationError(),
@@ -165,6 +163,7 @@ Object.defineProperties(VoxelProvider.prototype, {
 
   /**
    * Gets the metadata minimum values.
+   * This should not be called before {@link VoxelProvider#ready} returns true.
    *
    * @memberof VoxelProvider.prototype
    * @type {Number[][]|undefined}
@@ -176,6 +175,7 @@ Object.defineProperties(VoxelProvider.prototype, {
 
   /**
    * Gets the metadata maximum values.
+   * This should not be called before {@link VoxelProvider#ready} returns true.
    *
    * @memberof VoxelProvider.prototype
    * @type {Number[][]|undefined}
@@ -233,7 +233,7 @@ Object.defineProperties(VoxelProvider.prototype, {
  * @param {Number} [options.tileY=0] The tile's Y coordinate.
  * @param {Number} [options.tileZ=0] The tile's Z coordinate.
  * @param {Number} [options.keyframe=0] The requested keyframe.
- * @returns {Promise<Array[]>|undefined} An array of promises for the requested voxel data or undefined if there was a problem loading the data.
+ * @returns {Promise<Array[]>|undefined} A array of promises for the requested voxel data or undefined if there was a problem loading the data.
  *
  * @exception {DeveloperError} The provider must be ready.
  */
