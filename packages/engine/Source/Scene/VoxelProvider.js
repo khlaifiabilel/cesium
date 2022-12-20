@@ -26,7 +26,7 @@ Object.defineProperties(VoxelProvider.prototype, {
    * @readonly
    */
   ready: {
-    get: DeveloperError.throwInstantiationError,
+    get: DeveloperError.throwInstantiationError(),
   },
 
   /**
@@ -37,7 +37,7 @@ Object.defineProperties(VoxelProvider.prototype, {
    * @readonly
    */
   readyPromise: {
-    get: DeveloperError.throwInstantiationError,
+    get: DeveloperError.throwInstantiationError(),
   },
 
   /**
@@ -48,7 +48,7 @@ Object.defineProperties(VoxelProvider.prototype, {
    * @readonly
    */
   modelMatrix: {
-    get: DeveloperError.throwInstantiationError,
+    get: DeveloperError.throwInstantiationError(),
   },
 
   /**
@@ -60,7 +60,7 @@ Object.defineProperties(VoxelProvider.prototype, {
    * @readonly
    */
   shape: {
-    get: DeveloperError.throwInstantiationError,
+    get: DeveloperError.throwInstantiationError(),
   },
 
   /**
@@ -73,7 +73,7 @@ Object.defineProperties(VoxelProvider.prototype, {
    * @readonly
    */
   minBounds: {
-    get: DeveloperError.throwInstantiationError,
+    get: DeveloperError.throwInstantiationError(),
   },
 
   /**
@@ -86,7 +86,7 @@ Object.defineProperties(VoxelProvider.prototype, {
    * @readonly
    */
   maxBounds: {
-    get: DeveloperError.throwInstantiationError,
+    get: DeveloperError.throwInstantiationError(),
   },
 
   /**
@@ -98,7 +98,7 @@ Object.defineProperties(VoxelProvider.prototype, {
    * @readonly
    */
   dimensions: {
-    get: DeveloperError.throwInstantiationError,
+    get: DeveloperError.throwInstantiationError(),
   },
 
   /**
@@ -110,7 +110,7 @@ Object.defineProperties(VoxelProvider.prototype, {
    * @readonly
    */
   paddingBefore: {
-    get: DeveloperError.throwInstantiationError,
+    get: DeveloperError.throwInstantiationError(),
   },
 
   /**
@@ -122,7 +122,7 @@ Object.defineProperties(VoxelProvider.prototype, {
    * @readonly
    */
   paddingAfter: {
-    get: DeveloperError.throwInstantiationError,
+    get: DeveloperError.throwInstantiationError(),
   },
 
   /**
@@ -134,7 +134,7 @@ Object.defineProperties(VoxelProvider.prototype, {
    * @readonly
    */
   names: {
-    get: DeveloperError.throwInstantiationError,
+    get: DeveloperError.throwInstantiationError(),
   },
 
   /**
@@ -147,7 +147,7 @@ Object.defineProperties(VoxelProvider.prototype, {
    * @private
    */
   types: {
-    get: DeveloperError.throwInstantiationError,
+    get: DeveloperError.throwInstantiationError(),
   },
 
   /**
@@ -160,7 +160,7 @@ Object.defineProperties(VoxelProvider.prototype, {
    * @private
    */
   componentTypes: {
-    get: DeveloperError.throwInstantiationError,
+    get: DeveloperError.throwInstantiationError(),
   },
 
   /**
@@ -171,7 +171,7 @@ Object.defineProperties(VoxelProvider.prototype, {
    * @readonly
    */
   minimumValues: {
-    get: DeveloperError.throwInstantiationError,
+    get: DeveloperError.throwInstantiationError(),
   },
 
   /**
@@ -182,7 +182,7 @@ Object.defineProperties(VoxelProvider.prototype, {
    * @readonly
    */
   maximumValues: {
-    get: DeveloperError.throwInstantiationError,
+    get: DeveloperError.throwInstantiationError(),
   },
 
   /**
@@ -194,7 +194,7 @@ Object.defineProperties(VoxelProvider.prototype, {
    * @readonly
    */
   maximumTileCount: {
-    get: DeveloperError.throwInstantiationError,
+    get: DeveloperError.throwInstantiationError(),
   },
 
   /**
@@ -206,7 +206,7 @@ Object.defineProperties(VoxelProvider.prototype, {
    * @readonly
    */
   keyframeCount: {
-    get: DeveloperError.throwInstantiationError,
+    get: DeveloperError.throwInstantiationError(),
   },
 
   /**
@@ -218,7 +218,7 @@ Object.defineProperties(VoxelProvider.prototype, {
    * @readonly
    */
   timeIntervalCollection: {
-    get: DeveloperError.throwInstantiationError,
+    get: DeveloperError.throwInstantiationError(),
   },
 });
 
