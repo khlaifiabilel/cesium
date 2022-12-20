@@ -27,7 +27,6 @@ import VoxelShapeType from "./VoxelShapeType.js";
  * @param {Object} options Object with the following properties:
  * @param {String|Resource|Uint8Array} options.url The URL to the tileset directory
  *
- * @see GltfVoxelProvider
  * @see VoxelProvider
  * @see VoxelPrimitive
  * @see VoxelShapeType
