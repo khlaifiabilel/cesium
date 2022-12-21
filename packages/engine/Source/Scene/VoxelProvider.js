@@ -41,10 +41,10 @@ Object.defineProperties(VoxelProvider.prototype, {
   },
 
   /**
-   * A model matrix that is applied to all tiles. Defaults to the identity matrix.
+   * A model matrix that is applied to all tiles. If undefined, the identity matrix will be used instead.
    *
    * @memberof VoxelProvider.prototype
-   * @type {Matrix4}
+   * @type {Matrix4|undefined}
    * @readonly
    */
   modelMatrix: {
@@ -238,15 +238,5 @@ Object.defineProperties(VoxelProvider.prototype, {
  * @exception {DeveloperError} The provider must be ready.
  */
 VoxelProvider.prototype.requestData = DeveloperError.throwInstantiationError;
-
-/**
- * A hook to update the provider every frame, called from {@link VoxelPrimitive.update}.
- * If the provider doesn't need this functionality it should leave this function undefined.
- * @function
- *
- * @param {FrameState} frameState
- * @private
- */
-VoxelProvider.prototype.update = DeveloperError.throwInstantiationError;
 
 export default VoxelProvider;

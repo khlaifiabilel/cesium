@@ -7,7 +7,6 @@ import Check from "../Core/Check.js";
 import clone from "../Core/clone.js";
 import Color from "../Core/Color.js";
 import defaultValue from "../Core/defaultValue.js";
-import defer from "../Core/defer.js";
 import defined from "../Core/defined.js";
 import destroyObject from "../Core/destroyObject.js";
 import DeveloperError from "../Core/DeveloperError.js";
@@ -51,12 +50,6 @@ function VoxelPrimitive(options) {
    * @private
    */
   this._ready = false;
-
-  /**
-   * @type {Promise.<Boolean>}
-   * @private
-   */
-  this._readyPromise = defer();
 
   /**
    * @type {VoxelProvider}
@@ -429,9 +422,28 @@ function VoxelPrimitive(options) {
 
   // If the provider fails to initialize the primitive will fail too.
   const provider = this._provider;
-  const primitive = this;
-  provider.readyPromise.catch(function (error) {
-    primitive._readyPromise.reject(error);
+
+  this._completeLoad = function (primitive, frameState) {};
+  this._readyPromise = initialize(this, provider);
+}
+
+function initialize(primitive, provider) {
+  const promise = new Promise(function (resolve) {
+    primitive._completeLoad = function (primitive, frameState) {
+      // Set the primitive as ready after the first frame render since the user might set up events subscribed to
+      // the post render event, and the primitive may not be ready for those past the first frame.
+      frameState.afterRender.push(function () {
+        primitive._ready = true;
+        resolve(primitive);
+        return true;
+      });
+    };
+  }).then(function () {
+    return primitive;
+  });
+
+  return provider.readyPromise.then(function () {
+    return promise;
   });
 }
 
@@ -458,7 +470,7 @@ Object.defineProperties(VoxelPrimitive.prototype, {
    */
   readyPromise: {
     get: function () {
-      return this._readyPromise.promise;
+      return this._readyPromise;
     },
   },
 
@@ -1019,11 +1031,7 @@ const transformPositionUvToLocal = Matrix4.fromRotationTranslation(
  * @private
  */
 VoxelPrimitive.prototype.update = function (frameState) {
-  // Update the provider, if applicable.
   const provider = this._provider;
-  if (defined(provider.update)) {
-    provider.update(frameState);
-  }
 
   // Update the custom shader in case it has texture uniforms.
   this._customShader.update(frameState);
@@ -1036,15 +1044,10 @@ VoxelPrimitive.prototype.update = function (frameState) {
   // Initialize from the ready provider. This only happens once.
   const context = frameState.context;
   if (!this._ready) {
-    // Don't make the primitive ready until after its first update because
-    // external code may want to change some of its properties before it's rendered.
-    const primitive = this;
-    frameState.afterRender.push(function () {
-      primitive._ready = true;
-      primitive._readyPromise.resolve(primitive);
-    });
-
     initFromProvider(this, provider, context);
+    this._completeLoad(this, frameState);
+
+    // Don't render until the next frame after the ready promise is resolved
     return;
   }
 
