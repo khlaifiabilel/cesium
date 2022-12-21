@@ -6,7 +6,6 @@ import DeveloperError from "../Core/DeveloperError.js";
 import Ellipsoid from "../Core/Ellipsoid.js";
 import Matrix4 from "../Core/Matrix4.js";
 import OrientedBoundingBox from "../Core/OrientedBoundingBox.js";
-import Quaternion from "../Core/Quaternion.js";
 import Resource from "../Core/Resource.js";
 import RuntimeError from "../Core/RuntimeError.js";
 import Cesium3DTilesetMetadata from "./Cesium3DTilesetMetadata.js";
@@ -108,9 +107,13 @@ function Cesium3DTilesVoxelProvider(options) {
       .then(function (schemaLoader) {
         const root = tilesetJson.root;
 
+        const metadataJson = hasExtension(tilesetJson, "3DTILES_metadata")
+          ? tilesetJson.extensions["3DTILES_metadata"]
+          : tilesetJson;
+
         const metadataSchema = schemaLoader.schema;
         const metadata = new Cesium3DTilesetMetadata({
-          metadataJson: tilesetJson, // TODO: what about 3DTILES_metadata?
+          metadataJson: metadataJson,
           schema: metadataSchema,
         });
 
@@ -122,7 +125,7 @@ function Cesium3DTilesVoxelProvider(options) {
           metadataSchema
         );
 
-        const voxel = root.content.extensions["3DTILES_voxel_content"];
+        const voxel = root.content.extensions["3DTILES_content_voxels"];
 
         const { shape, transform, minBounds, maxBounds } = getShape(root);
 
@@ -159,9 +162,9 @@ function validate(tileset) {
     throw new RuntimeError("Root must have content");
   }
 
-  if (!hasExtension(root.content, "3DTILES_voxel_content")) {
+  if (!hasExtension(root.content, "3DTILES_content_voxels")) {
     throw new RuntimeError(
-      "Root tile must have 3DTILES_voxel_content extension"
+      "Root tile content must have 3DTILES_content_voxels extension"
     );
   }
 
@@ -183,16 +186,20 @@ function validate(tileset) {
 
 function getShape(tile) {
   const boundingVolume = tile.boundingVolume;
-  const transform = tile.transform;
+
+  let tileTransform = Matrix4.IDENTITY;
+  if (defined(tile.transform)) {
+    tileTransform = Matrix4.unpack(tile.transform);
+  }
 
   if (defined(boundingVolume.box)) {
-    return getBoxTransformAndBounds(boundingVolume.box, transform);
+    return getBoxShape(boundingVolume.box, tileTransform);
   } else if (defined(boundingVolume.region)) {
-    return getEllipsoidTransformAndBounds(boundingVolume.region);
+    return getEllipsoidShape(boundingVolume.region);
   } else if (hasExtension(boundingVolume, "3DTILES_bounding_volume_cylinder")) {
-    return getCylinderTransformAndBounds(
-      boundingVolume["3DTILES_bounding_volume_cylinder"],
-      transform
+    return getCylinderShape(
+      boundingVolume.extensions["3DTILES_bounding_volume_cylinder"].cylinder,
+      tileTransform
     );
   }
 
@@ -201,7 +208,7 @@ function getShape(tile) {
   );
 }
 
-function getEllipsoidTransformAndBounds(region) {
+function getEllipsoidShape(region) {
   const west = region[0];
   const south = region[1];
   const east = region[2];
@@ -235,19 +242,14 @@ function getEllipsoidTransformAndBounds(region) {
   };
 }
 
-function getBoxTransformAndBounds(box, transform) {
+function getBoxShape(box, tileTransform) {
   const obb = OrientedBoundingBox.unpack(box);
   const shapeTransform = Matrix4.fromRotationTranslation(
     obb.halfAxes,
     obb.center
   );
 
-  const tileTransform = defaultValue(
-    Matrix4.unpack(transform),
-    Matrix4.IDENTITY
-  );
-
-  const combinedTransform = Matrix4.multiply(
+  const transform = Matrix4.multiply(
     tileTransform,
     shapeTransform,
     new Matrix4()
@@ -257,33 +259,18 @@ function getBoxTransformAndBounds(box, transform) {
     shape: VoxelShapeType.BOX,
     minBounds: Cartesian3.clone(VoxelBoxShape.DefaultMinBounds),
     maxBounds: Cartesian3.clone(VoxelBoxShape.DefaultMaxBounds),
-    transform: combinedTransform,
+    transform: transform,
   };
 }
 
-function getCylinderTransformAndBounds(cylinder, transform) {
-  const x = cylinder[0];
-  const y = cylinder[1];
-  const z = cylinder[2];
-  const radiusX = cylinder[3];
-  const radiusY = cylinder[4];
-  const halfHeight = cylinder[5];
-
-  const translation = new Cartesian3(x, y, z);
-  const scale = new Cartesian3(radiusX, radiusY, halfHeight);
-
-  const shapeTransform = Matrix4.fromTranslationQuaternionRotationScale(
-    translation,
-    Quaternion.IDENTITY,
-    scale
+function getCylinderShape(cylinder, tileTransform) {
+  const obb = OrientedBoundingBox.unpack(cylinder);
+  const shapeTransform = Matrix4.fromRotationTranslation(
+    obb.halfAxes,
+    obb.center
   );
 
-  const tileTransform = defaultValue(
-    Matrix4.unpack(transform),
-    Matrix4.IDENTITY
-  );
-
-  const combinedTransform = Matrix4.multiply(
+  const transform = Matrix4.multiply(
     tileTransform,
     shapeTransform,
     new Matrix4()
@@ -293,7 +280,7 @@ function getCylinderTransformAndBounds(cylinder, transform) {
     shape: VoxelShapeType.CYLINDER,
     minBounds: Cartesian3.clone(VoxelCylinderShape.DefaultMinBounds),
     maxBounds: Cartesian3.clone(VoxelCylinderShape.DefaultMaxBounds),
-    transform: combinedTransform,
+    transform: transform,
   };
 }
 
@@ -411,6 +398,7 @@ function getSubtreePromise(provider, subtreeCoord) {
 
     const preprocessed = preprocess3DTileContent(arrayBuffer);
     subtree = new ImplicitSubtree(
+      subtreeResource,
       preprocessed.jsonPayload,
       preprocessed.binaryPayload,
       implicitTileset,

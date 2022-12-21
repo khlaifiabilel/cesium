@@ -133,7 +133,7 @@ const Cesium3DTileContentType = {
    */
   GEOJSON: "geoJson",
   /**
-   * Binary voxel content for <code>3DTILES_voxel_content</code> extension.
+   * Binary voxel content for <code>3DTILES_content_voxels</code> extension.
    *
    * @type {String}
    * @constant
@@ -142,7 +142,7 @@ const Cesium3DTileContentType = {
    */
   VOXEL_BINARY: "voxl",
   /**
-   * Binary voxel content for <code>3DTILES_voxel_content</code> extension.
+   * Binary voxel content for <code>3DTILES_content_voxels</code> extension.
    *
    * @type {String}
    * @constant
