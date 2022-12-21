@@ -13,13 +13,14 @@ import MetadataTable from "./MetadataTable.js";
  * @param {Resource} resource The resource for this voxel content. This is used for fetching external buffers as needed.
  * @param {Object} [json] Voxel JSON contents. Mutually exclusive with binary.
  * @param {Uint8Array} [binary] Voxel binary contents. Mutually exclusive with json.
+ * @param {MetadataSchema} metadataSchema The metadata schema used by property tables in the voxel content
  *
  * @exception {DeveloperError} One of json and binary must be defined.
  *
  * @private
  * @experimental This feature is not final and is subject to change without Cesium's standard deprecation policy.
  */
-function VoxelContent(resource, json, binary) {
+function VoxelContent(resource, json, binary, metadataSchema) {
   //>>includeStart('debug', pragmas.debug);
   Check.typeOf.object("resource", resource);
   if (defined(json) === defined(binary)) {
@@ -40,7 +41,12 @@ function VoxelContent(resource, json, binary) {
     chunks = parseVoxelChunks(binary);
   }
 
-  this._readyPromise = initialize(this, chunks.json, chunks.binary);
+  this._readyPromise = initialize(
+    this,
+    chunks.json,
+    chunks.binary,
+    metadataSchema
+  );
 }
 
 Object.defineProperties(VoxelContent.prototype, {
@@ -92,6 +98,7 @@ function initialize(content, json, binary, metadataSchema) {
       class: metadataSchema.classes[propertyTableJson.class],
       bufferViews: bufferViewsU8,
     });
+    return content;
   });
 }
 
@@ -105,13 +112,13 @@ function requestBuffers(content, json, binary) {
       const bufferResource = baseResource.getDerivedResource({
         url: buffer.uri,
       });
-      bufferPromises.push(
-        bufferResource.fetchArrayBuffer().then(function (arrayBuffer) {
+      bufferPromises[i] = bufferResource
+        .fetchArrayBuffer()
+        .then(function (arrayBuffer) {
           return new Uint8Array(arrayBuffer);
-        })
-      );
+        });
     } else {
-      bufferPromises.push(Promise.resolve(binary));
+      bufferPromises[i] = Promise.resolve(binary);
     }
   }
 

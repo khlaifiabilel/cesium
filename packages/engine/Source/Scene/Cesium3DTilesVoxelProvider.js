@@ -122,7 +122,7 @@ function Cesium3DTilesVoxelProvider(options) {
           metadataSchema
         );
 
-        const voxel = root.extensions["3DTILES_voxel_content"];
+        const voxel = root.content.extensions["3DTILES_voxel_content"];
 
         const { shape, transform, minBounds, maxBounds } = getShape(root);
 
@@ -154,7 +154,12 @@ Object.defineProperties(Cesium3DTilesVoxelProvider.prototype, {
 
 function validate(tileset) {
   const root = tileset.root;
-  if (!hasExtension(root, "3DTILES_voxel_content")) {
+
+  if (!defined(root.content)) {
+    throw new RuntimeError("Root must have content");
+  }
+
+  if (!hasExtension(root.content, "3DTILES_voxel_content")) {
     throw new RuntimeError(
       "Root tile must have 3DTILES_voxel_content extension"
     );
@@ -364,11 +369,12 @@ function getVoxelPromise(implicitTileset, tileCoordinates) {
   return voxelResource.fetchArrayBuffer().then(function (arrayBuffer) {
     const preprocessed = preprocess3DTileContent(arrayBuffer);
 
-    const voxelContent = new VoxelContent({
-      resource: voxelResource,
-      json: preprocessed.jsonPayload,
-      binary: preprocessed.binaryPayload,
-    });
+    const voxelContent = new VoxelContent(
+      voxelResource,
+      preprocessed.jsonPayload,
+      preprocessed.binaryPayload,
+      implicitTileset.metadataSchema
+    );
 
     return voxelContent.readyPromise;
   });
@@ -402,11 +408,11 @@ function getSubtreePromise(provider, subtreeCoord) {
     if (defined(subtree)) {
       return subtree.readyPromise;
     }
-    const bufferU8 = new Uint8Array(arrayBuffer);
+
+    const preprocessed = preprocess3DTileContent(arrayBuffer);
     subtree = new ImplicitSubtree(
-      subtreeResource,
-      undefined,
-      bufferU8,
+      preprocessed.jsonPayload,
+      preprocessed.binaryPayload,
       implicitTileset,
       subtreeCoord
     );
@@ -455,7 +461,7 @@ Cesium3DTilesVoxelProvider.prototype.requestData = function (options) {
 
   // Find the coordinates of the parent subtree containing tileCoordinates
   // If tileCoordinates is a subtree child, use that subtree
-  // If tileCoords is a subtree root, use its parent subtree
+  // If tileCoordinates is a subtree root, use its parent subtree
   const isSubtreeRoot =
     tileCoordinates.isSubtreeRoot() && tileCoordinates.level > 0;
 
