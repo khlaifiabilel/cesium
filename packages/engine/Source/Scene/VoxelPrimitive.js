@@ -184,6 +184,7 @@ function VoxelPrimitive(options) {
 
   /**
    * Keeps track of when the clipping planes are enabled / disabled
+   *
    * @type {Boolean}
    * @private
    */
@@ -195,9 +196,8 @@ function VoxelPrimitive(options) {
    * @type {Matrix4}
    * @private
    */
-  this._modelMatrix = defaultValue(
-    options.modelMatrix,
-    Matrix4.clone(Matrix4.IDENTITY, new Matrix4())
+  this._modelMatrix = Matrix4.clone(
+    defaultValue(options.modelMatrix, Matrix4.IDENTITY)
   );
 
   /**
@@ -422,7 +422,6 @@ function VoxelPrimitive(options) {
 
   // If the provider fails to initialize the primitive will fail too.
   const provider = this._provider;
-
   this._completeLoad = function (primitive, frameState) {};
   this._readyPromise = initialize(this, provider);
 }
@@ -438,8 +437,6 @@ function initialize(primitive, provider) {
         return true;
       });
     };
-  }).then(function () {
-    return primitive;
   });
 
   return provider.readyPromise.then(function () {
@@ -549,20 +546,7 @@ Object.defineProperties(VoxelPrimitive.prototype, {
       Check.typeOf.object("modelMatrix", modelMatrix);
       //>>includeEnd('debug');
 
-      this._modelMatrix = Matrix4.clone(modelMatrix, new Matrix4());
-    },
-  },
-
-  /**
-   * Gets the compound model matrix
-   *
-   * @memberof VoxelPrimitive.prototype
-   * @type {Matrix4}
-   * @readonly
-   */
-  compoundModelMatrix: {
-    get: function () {
-      return this._compoundModelMatrix;
+      this._modelMatrix = Matrix4.clone(modelMatrix, this._modelMatrix);
     },
   },
 
@@ -847,7 +831,8 @@ Object.defineProperties(VoxelPrimitive.prototype, {
   },
 
   /**
-   * Gets or sets the minimum bounds. TODO: fill in the rest later
+   * Gets or sets the minimum bounds in the shape's local coordinate system.
+   * Voxel data is stretched or squashed to fit the bounds.
    *
    * @memberof VoxelPrimitive.prototype
    * @type {Cartesian3}
@@ -866,7 +851,8 @@ Object.defineProperties(VoxelPrimitive.prototype, {
   },
 
   /**
-   * Gets or sets the maximum bounds. TODO: fill in the rest later.
+   * Gets or sets the maximum bounds in the shape's local coordinate system.
+   * Voxel data is stretched or squashed to fit the bounds.
    *
    * @memberof VoxelPrimitive.prototype
    * @type {Cartesian3}
@@ -887,7 +873,6 @@ Object.defineProperties(VoxelPrimitive.prototype, {
   /**
    * Gets or sets the minimum clipping location in the shape's local coordinate system.
    * Any voxel content outside the range is clipped.
-   * The minimum value is 0 and the maximum value is 1.
    *
    * @memberof VoxelPrimitive.prototype
    * @type {Cartesian3}
@@ -911,7 +896,6 @@ Object.defineProperties(VoxelPrimitive.prototype, {
   /**
    * Gets or sets the maximum clipping location in the shape's local coordinate system.
    * Any voxel content outside the range is clipped.
-   * The minimum value is 0 and the maximum value is 1.
    *
    * @memberof VoxelPrimitive.prototype
    * @type {Cartesian3}
@@ -998,9 +982,6 @@ Object.defineProperties(VoxelPrimitive.prototype, {
   },
 });
 
-// TODO 3-channel + 1-channel metadata is a problem right now
-// Individually, they both work, but together the 1-channel is messed up
-
 const scratchDimensions = new Cartesian3();
 const scratchIntersect = new Cartesian4();
 const scratchNdcAabb = new Cartesian4();
@@ -1025,7 +1006,6 @@ const transformPositionUvToLocal = Matrix4.fromRotationTranslation(
 
 /**
  * Updates the voxel primitive.
- * @function
  *
  * @param {FrameState} frameState
  * @private
@@ -1208,14 +1188,9 @@ function initFromProvider(primitive, provider, context) {
   uniforms.pickColor = Color.clone(primitive._pickId.color, uniforms.pickColor);
 
   // Set the bounds
-  const {
-    shape: shapeType,
-    minBounds = VoxelShapeType.getMinBounds(shapeType),
-    maxBounds = VoxelShapeType.getMaxBounds(shapeType),
-  } = provider;
-
-  primitive.minBounds = minBounds;
-  primitive.maxBounds = maxBounds;
+  const shapeType = provider.shape;
+  primitive.minBounds = VoxelShapeType.getMinBounds(shapeType);
+  primitive.maxBounds = VoxelShapeType.getMaxBounds(shapeType);
   primitive.minClippingBounds = VoxelShapeType.getMinBounds(shapeType);
   primitive.maxClippingBounds = VoxelShapeType.getMaxBounds(shapeType);
 
@@ -1309,19 +1284,20 @@ function checkTransformAndBounds(primitive, provider) {
 
 /**
  * Compare old and new values of a bound and update the old if it is different.
- * @param {VoxelPrimitive} The primitive with bounds properties
- * @param {String} oldBoundKey A key pointing to a bounds property of type Cartesian3 or Matrix4
- * @param {String} newBoundKey A key pointing to a bounds property of the same type as the property at oldBoundKey
+ * @param {VoxelPrimitive} primitive The primitive with bounds properties
+ * @param {String} newBoundKey A key pointing to a bounds property of type Cartesian3 or Matrix4
+ * @param {String} oldBoundKey A key pointing to a bounds property of the same type as the property at newBoundKey
  * @returns {Number} 1 if the bound value changed, 0 otherwise
  *
  * @private
  */
 function updateBound(primitive, newBoundKey, oldBoundKey) {
   const newBound = primitive[newBoundKey];
-  const BoundClass = newBound.constructor;
-  const changed = !BoundClass.equals(newBound, primitive[oldBoundKey]);
+  const oldBound = primitive[oldBoundKey];
+
+  const changed = !newBound.equals(oldBound);
   if (changed) {
-    primitive[oldBoundKey] = BoundClass.clone(newBound, primitive[oldBoundKey]);
+    newBound.clone(oldBound);
   }
   return changed ? 1 : 0;
 }
@@ -1336,7 +1312,7 @@ function updateBound(primitive, newBoundKey, oldBoundKey) {
  */
 function updateShapeAndTransforms(primitive, shape, provider) {
   const visible = shape.update(
-    primitive.compoundModelMatrix,
+    primitive._compoundModelMatrix,
     primitive.minBounds,
     primitive.maxBounds,
     primitive.minClippingBounds,
@@ -1372,7 +1348,6 @@ function updateShapeAndTransforms(primitive, shape, provider) {
   // Set member variables when the shape is dirty
   const dimensions = provider.dimensions;
   primitive._stepSizeUv = shape.computeApproximateStepSize(dimensions);
-  //  TODO: check which of the `multiply` can be `multiplyTransformation`
   primitive._transformPositionWorldToUv = Matrix4.multiply(
     transformPositionLocalToUv,
     transformPositionWorldToLocal,
@@ -1435,7 +1410,6 @@ function setupTraversal(primitive, provider, context) {
 
 /**
  * Set uniforms that come from the traversal.
- * TODO: should this be done in VoxelTraversal?
  * @param {VoxelTraversal} traversal
  * @param {Object} uniforms
  * @private

@@ -142,6 +142,7 @@ function Cesium3DTilesVoxelProvider(options) {
 
         that._implicitTileset = implicitTileset;
         that.ready = true;
+        return that;
       });
   });
 }
