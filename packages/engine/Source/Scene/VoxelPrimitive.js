@@ -1188,9 +1188,14 @@ function initFromProvider(primitive, provider, context) {
   uniforms.pickColor = Color.clone(primitive._pickId.color, uniforms.pickColor);
 
   // Set the bounds
-  const shapeType = provider.shape;
-  primitive.minBounds = VoxelShapeType.getMinBounds(shapeType);
-  primitive.maxBounds = VoxelShapeType.getMaxBounds(shapeType);
+  const {
+    shape: shapeType,
+    minBounds = VoxelShapeType.getMinBounds(shapeType),
+    maxBounds = VoxelShapeType.getMaxBounds(shapeType),
+  } = provider;
+
+  primitive.minBounds = minBounds;
+  primitive.maxBounds = maxBounds;
   primitive.minClippingBounds = VoxelShapeType.getMinBounds(shapeType);
   primitive.maxClippingBounds = VoxelShapeType.getMaxBounds(shapeType);
 
@@ -1815,6 +1820,29 @@ function debugDraw(that, frameState) {
     makePolylineLineSegment(corners[2], corners[6], color, thickness);
     makePolylineLineSegment(corners[1], corners[5], color, thickness);
     makePolylineLineSegment(corners[3], corners[7], color, thickness);
+
+    if (defined(orientedBoundingBox.testPositions)) {
+      for (const testPosition of orientedBoundingBox.testPositions) {
+        const firstPosition = testPosition;
+        const normal = Cartesian3.normalize(firstPosition, new Cartesian3());
+        const scaledNormal = Cartesian3.multiplyByScalar(
+          normal,
+          10000,
+          new Cartesian3()
+        );
+        const secondPosition = Cartesian3.add(
+          firstPosition,
+          scaledNormal,
+          new Cartesian3()
+        );
+        makePolylineLineSegment(
+          firstPosition,
+          secondPosition,
+          Color.PINK,
+          thickness
+        );
+      }
+    }
   }
 
   function drawTile(tile) {

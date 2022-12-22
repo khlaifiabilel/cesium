@@ -810,25 +810,25 @@ function getCylinderChunkObb(
 
   if (angleStart > angleEnd) {
     if (angleStart <= 0.0 || angleEnd >= 0.0) {
-      testAngles[testAngleCount++] = 0.0;
+      // testAngles[testAngleCount++] = 0.0;
     }
     if (angleStart <= +halfPi || angleEnd >= +halfPi) {
-      testAngles[testAngleCount++] = +halfPi;
+      // testAngles[testAngleCount++] = +halfPi;
     }
     if (angleStart <= -halfPi || angleEnd >= -halfPi) {
-      testAngles[testAngleCount++] = -halfPi;
+      // testAngles[testAngleCount++] = -halfPi;
     }
     // It will always cross the 180th meridian
-    testAngles[testAngleCount++] = CesiumMath.PI;
+    // testAngles[testAngleCount++] = CesiumMath.PI;
   } else {
     if (angleStart < 0.0 && angleEnd > 0.0) {
-      testAngles[testAngleCount++] = 0.0;
+      // testAngles[testAngleCount++] = 0.0;
     }
     if (angleStart < +halfPi && angleEnd > +halfPi) {
-      testAngles[testAngleCount++] = +halfPi;
+      // testAngles[testAngleCount++] = +halfPi;
     }
     if (angleStart < -halfPi && angleEnd > -halfPi) {
-      testAngles[testAngleCount++] = -halfPi;
+      // testAngles[testAngleCount++] = -halfPi;
     }
   }
 
@@ -876,6 +876,8 @@ function getCylinderChunkObb(
   for (let i = 0; i < testAngleCount * 4; i++) {
     positions[i] = Matrix4.multiplyByPoint(matrix, positions[i], positions[i]);
   }
+
+  result.testPositions = positions;
 
   return OrientedBoundingBox.fromPoints(positions, result);
 }
